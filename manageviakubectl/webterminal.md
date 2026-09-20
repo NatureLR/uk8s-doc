@@ -1,69 +1,21 @@
 ## 使用web kubectl
 
-UK8S 在console中提供 web terminal，你可以通过web terminal 登录到集群内的Pod，并使用kubectl 操作和管理集群。
+UK8S在控制台中提供Web终端，无需在本地安装kubectl即可操作和管理集群。
 
-该Pod通过Deployment的方式启动，并通过特定的安全机制代理到UCloud控制台界面，如果你误删除了该Deployment，则无法使用console中的kubectl功能。
+1. 在UK8S集群列表找到目标集群，点击操作列中的「kubectl」，打开独立的命令行页面。
 
-你可以使用下方的yaml文件重新启动一个Pod,yaml示例如下。
+![集群列表中的kubectl入口](/images/manageviakubectl/web-kubectl-entry-current.png)
 
-> 备注：uk8s-kubectl的镜像tag与您的UK8S集群版本一致，如你的UK8S版本为1.14.5，则将镜像tag改为v1.14.5即可。
+2. 等待终端显示提示符后，可执行以下命令检查客户端和访问权限。将`default`替换为实际授权的命名空间。
 
-```yaml
-# ------------------- kubectl Deployment ------------------- #
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    k8s-app: uk8s-kubectl
-  name: uk8s-kubectl
-  namespace: kube-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      k8s-app: uk8s-kubectl
-  template:
-    metadata:
-      labels:
-        k8s-app: uk8s-kubectl
-    spec:
-      serviceAccountName: uk8s-kubectl
-      containers:
-        - image: uhub.service.ucloud.cn/ucloud/uk8s-kubectl:v1.14.6
-          imagePullPolicy: IfNotPresent
-          name: uk8s-kubectl
-          resources:
-            requests:
-              memory: "100Mi"
-              cpu: "100m"
-            limits:
-              memory: "500Mi"
-              cpu: "500m"
-
----
-# ------------------- Service Account ------------------- #
-
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    k8s-app: uk8s-kubectl
-  name: uk8s-kubectl
-  namespace: kube-system
-
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: uk8s-kubectl-rolebind
-  annotations:
-    rbac.authorization.kubernetes.io/autoupdate: "true"
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
-subjects:
-- kind: ServiceAccount
-  name: uk8s-kubectl
-  namespace: kube-system
+```bash
+kubectl version --client
+kubectl auth can-i get pods -n default
+kubectl get pods -n default
 ```
+
+![Web kubectl客户端及读取权限检查](/images/manageviakubectl/web-kubectl-terminal-current.png)
+
+开启授权管理后，子账号终端使用自己的凭证，访问范围受RBAC权限限制，详见[授权管理](/uk8s/auth/rbac)。会话断开或超时后，可从集群列表重新打开。
+
+终端持续不可用时，可通过[本地kubectl](/uk8s/manageviakubectl/connectviakubectl)连接排查，或联系技术支持。

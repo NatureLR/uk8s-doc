@@ -1,9 +1,9 @@
 ## kubectl命令行简介
 
-> 由于查看集群凭证可以直接登录集群，所以查看集群凭证的操作已归为用户角色权限中的增权限，如需查看集群凭证，请确保所在角色已开启UK8S增权限。
+> 获取凭证需要相应的 IAM 权限，子账号还需获得集群的 RBAC 授权，详见[授权管理](/uk8s/auth/rbac)。
 
 kubectl是一个用于操作kubernetes集群的命令行工具，本文将简要介绍下kubectl的语法，并提供一些常见命令示例，如果你想了解深入了解kubectl的用法，请查阅官方文档[kubectl overview](https://kubernetes.io/docs/reference/kubectl/overview/)，或使用kubectl
-help命令查看详细帮助。 安装kubectl请查看[安装及配置kubectl](uk8s/manageviakubectl/connectviakubectl)。
+help命令查看详细帮助。 安装kubectl请查看[安装及配置kubectl](/uk8s/manageviakubectl/connectviakubectl)。
 
 ### kubectl 语法
 
@@ -24,7 +24,7 @@ kubectl get po
 kubectl get POD
 ```
 
-**NAME:** 即资源的名称，NAME是大小写敏感的。如果不指定某个资源的名称，则显示所有资源，如kubectl get pods 会显示Default命名空间下所有的pod。
+**NAME:** 即资源的名称，NAME是大小写敏感的。如果不指定某个资源的名称，则显示所有资源，如kubectl get pods 会显示当前上下文所配置命名空间下的pod，未配置命名空间时使用default。
 
 你还可以同时获取多个资源的详细情况，如获取同一类型的资源详情，不同类型的资源详情：
 
@@ -61,15 +61,11 @@ $ kubectl create -f example-controller.yaml
 # 查看名为<node-name>的node节点详情
 $ kubectl describe nodes <node-name>
 
-# 查看名为<pod-name>的pod详情，包含pod的创建日志
+# 查看名为<pod-name>的pod详情，包含pod的状态和相关事件；容器日志请使用kubectl logs
 $ kubectl describe pods/<pod-name>
 
-# 查看所有由名为<rc-name>的replication管理的pod。
-# 注意: 任何由replication controller创建的pod，其名称前缀为replication名称。
-$ kubectl describe pods <rc-name>
-
-# 查看所有pods，但不包含未初始化的pods
-$ kubectl describe pods --include-uninitialized=false
+# 按标签查看pod详情，请将app=example替换为实际标签
+$ kubectl describe pods -l app=example
 ```
 
 **kubectl logs** - 获取某个pod的日志
@@ -86,11 +82,11 @@ $ kubectl logs -f <pod-name>
 
 ```bash
 # 从pod中获取运行"date"命令的输出，默认情况下，来自于pod中的第一个容器。
-$ kubectl exec <pod-name> date
+$ kubectl exec <pod-name> -- date
 
 # 从pod中指定的容器中获取运行"date"命令的输出
-$ kubectl exec <pod-name> -c <container-name> date
+$ kubectl exec <pod-name> -c <container-name> -- date
 
 # 从pod中得到一个交互式tty(控制终端),并执行/bin/bash
-$ kubectl exec -ti <pod-name> /bin/bash
+$ kubectl exec -ti <pod-name> -- /bin/bash
 ```
